@@ -4,13 +4,12 @@
   4.2.1 példa
 */
 
-const int max_sample = 100;
-
 float v_0 = 8;      // Kezdeti sebesség     (m/s)
 float F_e = 0.1;    // A testre ható erő    (N : kgm/s2)
 float m = 0.005;    // A test tömege (kg)
 float startx = 0.1; // A kezdeti pozícója a testnek.
 float d_t = 0.01;
+float min_t = 1.1;
 float max_t = 1.2;
 
 float v_t; // Sebesség (eredmény)  (m/s)
@@ -18,32 +17,17 @@ float a_m; // A test gyorsulása. (kgm/s2/kg : m/s2)
 float x_t; // Elmozdulás
 
 /*!
-    float getnextv(float m, float F, float v_prev)
+    float getnextv(float t, float m, float F)
     A sebességfüggvény következő értéke.
-  \param m  float tomeg
+  \param t  float idő (tizedes)
   \param F  float gyorsitoero
-  \param v_prev float aktuális sebesség
-  \return A test sebessége, amelyre a t idő elteltével szert tesz.
+  \param m  a gyorsítandó tömeg.
+  \return A test sebességnövekedése, amelyre a t idő elteltével szert tesz.
 */
 
 float getnextv(float t, float m, float F)
 {
   return (((F / m) * t));
-}
-
-/*!
-    float getnextx(float t, float m, float F, float v_prev)
-    Az elmozdulásfüggvény következő értéke.
-  \param t  float ido
-  \param m  float tomeg
-  \param F  float gyorsitoero
-  \param v_prev float
-  \return A test elmozdulása t idő alatt.
-*/
-
-float getnextx(float t, float v)
-{
-  return ((1.0 / 2.0) * v * t);
 }
 
 int main() // define the main function
@@ -61,7 +45,10 @@ int main() // define the main function
     return 1;
   }
 
-  fprintf(outfile, "TIME  VEL LONG.\n");
+  // idő: mp-ben, sebesség, kezdősebességből adódó távolság, gyorsolásból adódó távolság,
+  // össz. távolság
+
+  fprintf(outfile, "IDŐ, SEBESSÉG, KEZD_TÁVOLSÁG, GYORS_TÁVOLSÁG, ÖSSZ_TÁVOLSÁG\n");
 
   /*
     v_0-lal indítunk.
@@ -71,19 +58,21 @@ int main() // define the main function
   float v_next;
   float x_next;
   float st_v0 = 0;
+  float x_all;
   x_t = startx;
 
-  for (float i = 0; i < max_t; i += d_t)
+  for (float i = min_t; i < max_t; i += d_t)
   {
-    fprintf(outfile, " %f, %f, %f, %f\n", i, v, x_t, st_v0);
+    x_all = st_v0 + x_t;
+    fprintf(outfile, " %f, %f, %f, %f, %f\n", i, v, st_v0, x_t, x_all);
+    // A következő sebesség kiszámítása.
     v_next = getnextv(d_t, m, F_e);
-
-    x_next = ((1.0 / 2.0) * (F_e / m) * (d_t * d_t)) + (v * d_t) + x_t;
+    // A következő távolság kiszámítása. (növekmény)
+    x_next = (((1.0 / 2.0) * (F_e / m) * (d_t * d_t)) + (v * d_t) + x_t);
+    // A következő sebesség az előző és a növekmény.
     v += v_next;
-
-    //    x_next = getnextx(d_t, v);
-    x_t = x_next;
     st_v0 += v_0 * d_t;
+    x_t = x_next;
   }
 
   fclose(outfile);
