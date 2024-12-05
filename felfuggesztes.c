@@ -39,7 +39,7 @@ float F_rugo;
 // Ez a karosszéria súlyereje.
 float F_grav;
 
-/* A függőleges irányú elmozdulás és a kifejtett erő faktora
+/* A függőleges irányú elmozdulás és a kifejtett erő összefüggésének definiálása.
  */
 
 float f_vert_per_v_dist(float v_dist)
