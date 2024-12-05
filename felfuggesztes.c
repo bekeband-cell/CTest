@@ -49,20 +49,27 @@ float v_dist;
 float F_rugo;
 
 /* A függőleges irányú elmozdulás és a kifejtett erő függvénye. Rugó.
+Most a legegyszerűbb, egyenes arányosság a benyomódás és a rugóerő között.
  */
 
 float f_vert_per_v_dist(float v_dist)
 {
-    return v_dist * 0.01;
+    return v_dist * 200;
+}
+
+float U_spring(float k, float x)
+{
+    return (0.5 * k * (x * x));
 }
 
 /*
 A függőleges irányú sebesség-erő függvényének definiálása. Lengéscsillapító.
+Egyenes arányosság a függőleges sebesség és a visszatartó erő között.
 */
 
 float f_vert_per_v_vert(float v_vert)
 {
-    return v_vert * 0.1;
+    return v_vert * 20;
 }
 
 /*!
@@ -73,6 +80,8 @@ float v(float s_vert, float d_t)
 }
 
 const char *roadfileName = "fekvorendor.txt";
+
+const char *outfile_name = "resfekvorendor.csv";
 
 float roadbuffer[MAXBUFLEN];
 
@@ -99,19 +108,45 @@ int main()
     fscanf(roadfile, "%f", &t_e);
     t_e_int = t_e;
 
+    float next_float;
+
+    /*!
+        \brief Beolvasás a roadbufferbe.
+    */
+
     for (int t = 0; t < t_e; t++)
     {
-        //        s_vert =
-        //            F_csill = f_vert_per_v_vert(v(s_vert, d_t));
-        fscanf(roadfile, "%f", &roadbuffer[t]);
-    }
-
-    for (int i = 0; i < t_e; i++)
-    {
-        printf("%f\n", roadbuffer[i]);
+        fscanf(roadfile, "%f", &next_float);
+        roadbuffer[t] = next_float;
+        printf("t: data %f\n", roadbuffer[t]);
     }
 
     fclose(roadfile);
+
+    FILE *outfile;
+    outfile = fopen(outfile_name, "w+");
+    if (outfile == NULL)
+    {
+        printf("Nem hozható létre %s", outfile_name); // print the statement.
+        return 1;
+    }
+
+    fprintf(outfile, "IDŐ, ÚTX, DELTAX, FX\n");
+
+    float delta_x;
+
+    for (int i = 1; i < t_e; i++)
+    {
+
+        delta_x = roadbuffer[i] - roadbuffer[i - 1];
+        float v_x = v(delta_x, 1);
+        F_csill = f_vert_per_v_vert(v_x);
+        F_rugo = f_vert_per_v_dist(delta_x);
+        F_all = F_csill + F_rugo + F_grav;
+        fprintf(outfile, " %d, %f, %f, %f\n", i, roadbuffer[i], delta_x, F_all);
+    }
+
+    fclose(outfile);
 }
 
 // A felfüggesztés
